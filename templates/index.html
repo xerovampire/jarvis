@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS AI Assistant</title>
+    <!-- CSS WILL BE ADDED IN PART 2 -->
+    <style>
+        /* JARVIS AI Assistant - Part 2 (CSS) */
+/* Replace the <style> section content in Part 1 with this CSS */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: #000;
+    color: #0ff;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ============================================
+   BACKGROUND EFFECTS
+   ============================================ */
+
+.grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.scanline {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(transparent 50%, rgba(0, 255, 255, 0.03) 50%);
+    background-size: 100% 4px;
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+@keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+}
+
+/* Corner decorations */
+.corner {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 2px solid rgba(0, 255, 255, 0.4);
+    pointer-events: none;
+    z-index: 1001;
+}
+
+.corner.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+.corner.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+.corner.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    padding: 15px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ============================================
+   HEADER SECTION (Logo)
+   ============================================ */
+
+.header-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+}
+
+.center-logo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.logo-rings {
+    position: absolute;
+    inset: 0;
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.ring1 { inset: 0; }
+.ring2 { inset: 10px; border-style: dashed; }
+.ring3 { inset: 20px; }
+
+.logo-icon {
+    position: absolute;
+    inset: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.jarvis-text {
+    font-size: 36px;
+    letter-spacing: 12px;
+    text-shadow: 0 0 20px #0ff;
+    animation: glow 2s infinite;
+}
+
+@keyframes glow {
+    0%, 100% { text-shadow: 0 0 10px #0ff; }
+    50% { text-shadow: 0 0 20px #0ff, 0 0 30px #0ff; }
+}
+
+/* ============================================
+   MAIN GRID (3 Columns)
+   ============================================ */
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 15px;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ============================================
+   COLUMNS
+   ============================================ */
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.left-column::-webkit-scrollbar,
+.right-column::-webkit-scrollbar {
+    width: 4px;
+}
+
+.left-column::-webkit-scrollbar-track,
+.right-column::-webkit-scrollbar-track {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.left-column::-webkit-scrollbar-thumb,
+.right-column::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+    border-radius: 2px;
+}
+
+.center-column {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ============================================
+   PANEL STYLES
+   ============================================ */
+
+.panel {
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    padding: 15px;
+}
+
+.panel-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ============================================
+   DATE/TIME CIRCLE
+   ============================================ */
+
+.datetime-panel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.datetime-circle {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.circle-svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.circle-bg {
+    fill: none;
+    stroke: rgba(0, 255, 255, 0.2);
+    stroke-width: 1;
+}
+
+.circle-progress {
+    fill: none;
+    stroke: #0ff;
+    stroke-width: 2;
+    stroke-dasharray: 440;
+    filter: drop-shadow(0 0 8px #0ff);
+    transition: stroke-dashoffset 1s linear;
+}
+
+.datetime-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.date-month {
+    opacity: 0.6;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+
+.date-day {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 5px 0;
+    text-shadow: 0 0 10px #0ff;
+}
+
+.date-time {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+/* ============================================
+   SYSTEM STATUS
+   ============================================ */
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.status-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-icon {
+    width: 12px;
+    height: 12px;
+}
+
+.status-value {
+    color: #0ff;
+}
+
+.status-online {
+    color: #0f0;
+}
+
+/* ============================================
+   DIAGNOSTICS
+   ============================================ */
+
+.diagnostic-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(0, 255, 255, 0.05);
+    border-left: 2px solid rgba(0, 255, 255, 0.3);
+}
+
+.diag-label {
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+.diag-value {
+    color: #0ff;
+    font-weight: bold;
+}
+
+/* ============================================
+   SYSTEM METRICS
+   ============================================ */
+
+.metric {
+    margin-bottom: 12px;
+}
+
+.metric-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.metric-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-fill {
+    height: 100%;
+    background: #0ff;
+    box-shadow: 0 0 10px #0ff;
+    transition: width 0.3s ease;
+}
+
+/* ============================================
+   CHAT PANEL
+   ============================================ */
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.chat-container {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+    border-radius: 3px;
+}
+
+.message {
+    margin-bottom: 15px;
+    display: flex;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message-content {
+    max-width: 75%;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 255, 255, 0.05);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.message.user .message-content {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.message.jarvis .message-content {
+    border-left: 2px solid #0ff;
+}
+
+.typing-indicator {
+    display: none;
+    padding: 12px 16px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-left: 2px solid #0ff;
+    background: rgba(0, 255, 255, 0.05);
+    width: fit-content;
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0ff;
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ============================================
+   CHAT INPUT AREA
+   ============================================ */
+
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#commandInput {
+    flex: 1;
+    padding: 12px 18px;
+    background: rgba(0, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #0ff;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#commandInput:focus {
+    background: rgba(0, 255, 255, 0.1);
+    border-color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+#commandInput::placeholder {
+    color: rgba(0, 255, 255, 0.4);
+}
+
+.btn {
+    padding: 12px 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.5);
+    color: #0ff;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-send {
+    width: 50px;
+}
+
+.btn-voice {
+    width: 50px;
+    font-size: 20px;
+    position: relative;
+}
+
+.btn-voice.listening {
+    background: rgba(255, 0, 100, 0.2);
+    border-color: #f0f;
+    animation: voicePulse 1.5s infinite;
+}
+
+@keyframes voicePulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(255, 0, 255, 0);
+    }
+}
+
+/* ============================================
+   ACTIVITY LOG
+   ============================================ */
+
+.activity-log {
+    max-height: 200px;
+}
+
+.activity-log-content {
+    font-size: 9px;
+    line-height: 1.8;
+    opacity: 0.7;
+    overflow-y: auto;
+    max-height: 150px;
+}
+
+.activity-log-content div {
+    margin-bottom: 3px;
+}
+
+.activity-log-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.activity-log-content::-webkit-scrollbar-track {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.activity-log-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+}
+
+/* ============================================
+   RUNTIME DATA
+   ============================================ */
+
+.runtime-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.runtime-item {
+    padding: 8px;
+    background: rgba(0, 255, 255, 0.05);
+    border-left: 2px solid rgba(0, 255, 255, 0.3);
+}
+
+.runtime-label {
+    font-size: 8px;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.runtime-value {
+    font-size: 11px;
+    color: #0ff;
+    font-weight: bold;
+}
+
+/* ============================================
+   NEURAL NETWORK
+   ============================================ */
+
+.neural-status {
+    margin-bottom: 15px;
+}
+
+.neural-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.neural-item:last-child {
+    border-bottom: none;
+}
+
+.neural-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.neural-stat-item {
+    padding: 10px;
+    background: rgba(0, 255, 255, 0.05);
+    text-align: center;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.stat-label {
+    font-size: 8px;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 14px;
+    color: #0ff;
+    font-weight: bold;
+}
+
+/* ============================================
+   CONNECTIONS
+   ============================================ */
+
+.connection-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.connection-item:last-child {
+    border-bottom: none;
+}
+
+.conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0f0;
+    box-shadow: 0 0 8px #0f0;
+}
+
+.conn-info {
+    flex: 1;
+}
+
+.conn-name {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.conn-detail {
+    font-size: 8px;
+    opacity: 0.6;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1400px) {
+    .main-grid {
+        grid-template-columns: 250px 1fr 280px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    
+    .left-column,
+    .right-column {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        overflow-y: visible;
+    }
+    
+    .center-column {
+        order: -1;
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header-section {
+        height: 70px;
+    }
+    
+    .logo-container {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .logo-icon {
+        font-size: 24px;
+        inset: 10px;
+    }
+    
+    .jarvis-text {
+        font-size: 24px;
+        letter-spacing: 6px;
+    }
+    
+    .runtime-grid {
+        grid-template-columns: 1fr;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="scanline"></div>
+    
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div class="container">
+        <!-- TOP ROW: Header with Logo and System Status -->
+        <div class="header-section">
+            <!-- Logo (Centered) -->
+            <div class="center-logo">
+                <div class="logo-container">
+                    <div class="logo-rings">
+                        <div class="ring ring1"></div>
+                        <div class="ring ring2"></div>
+                        <div class="ring ring3"></div>
+                    </div>
+                    <div class="logo-icon">🤖</div>
+                </div>
+                <div class="jarvis-text">J.A.R.V.I.S</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT GRID -->
+        <div class="main-grid">
+            <!-- LEFT COLUMN: Time, System Status, Diagnostics -->
+            <div class="left-column">
+                <!-- Date/Time Circle -->
+                <div class="panel datetime-panel">
+                    <div class="datetime-circle">
+                        <svg class="circle-svg" viewBox="0 0 160 160">
+                            <circle class="circle-bg" cx="80" cy="80" r="70"/>
+                            <circle class="circle-progress" id="timeCircle" cx="80" cy="80" r="70"/>
+                        </svg>
+                        <div class="datetime-content">
+                            <div class="date-month" id="dateMonth">OCTOBER</div>
+                            <div class="date-day" id="dateDay">06</div>
+                            <div class="date-time" id="dateTime">00:00:00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="panel system-status">
+                    <div class="panel-title">SYSTEM STATUS</div>
+                    <div class="status-item">
+                        <div class="status-label">
+                            <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+                            </svg>
+                            <span>POWER CORE</span>
+                        </div>
+                        <div class="status-value">99.2%</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">
+                            <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <span>SHIELD</span>
+                        </div>
+                        <div class="status-value status-online">ACTIVE</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">
+                            <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                            </svg>
+                            <span>NETWORK</span>
+                        </div>
+                        <div class="status-value" id="networkStatus">CHECKING...</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">
+                            <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span>TARGETING</span>
+                        </div>
+                        <div class="status-value status-online">READY</div>
+                    </div>
+                </div>
+
+                <!-- System Diagnostics -->
+                <div class="panel diagnostics-panel">
+                    <div class="panel-title">DIAGNOSTICS</div>
+                    <div class="diagnostic-item">
+                        <div class="diag-label">CORE TEMP</div>
+                        <div class="diag-value" id="coreTemp">36°C</div>
+                    </div>
+                    <div class="diagnostic-item">
+                        <div class="diag-label">UPTIME</div>
+                        <div class="diag-value" id="uptime">2h 34m</div>
+                    </div>
+                    <div class="diagnostic-item">
+                        <div class="diag-label">PROCESSES</div>
+                        <div class="diag-value" id="processes">247</div>
+                    </div>
+                    <div class="diagnostic-item">
+                        <div class="diag-label">LATENCY</div>
+                        <div class="diag-value" id="latency">12ms</div>
+                    </div>
+                </div>
+
+                <!-- System Metrics -->
+                <div class="panel system-metrics">
+                    <div class="panel-title">PERFORMANCE</div>
+                    <div class="metric">
+                        <div class="metric-label">
+                            <span>CPU Usage</span>
+                            <span id="cpuValue">34%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="cpuBar" style="width: 34%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">
+                            <span>Memory</span>
+                            <span id="memValue">67%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="memBar" style="width: 67%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">
+                            <span>Network</span>
+                            <span id="netValue">89%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="netBar" style="width: 89%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">
+                            <span>Disk I/O</span>
+                            <span id="diskValue">45%</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="diskBar" style="width: 45%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER COLUMN: Chat Interface -->
+            <div class="center-column">
+                <div class="chat-panel">
+                    <div class="chat-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>COMMUNICATION INTERFACE</span>
+                    </div>
+                    
+                    <div class="chat-container" id="chatContainer">
+                        <div class="message jarvis">
+                            <div class="message-content">
+                                Hello! I'm JARVIS, your AI assistant. I understand natural language!<br><br>
+                                • "Open Visual Studio Code"<br>
+                                • "Search latest news"<br>
+                                • "Open YouTube" then "AP Dhillon"<br>
+                                • Click 🎤 for always-on voice!
+                            </div>
+                        </div>
+                        <div class="typing-indicator" id="typingIndicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input 
+                            type="text" 
+                            id="commandInput" 
+                            placeholder="TYPE COMMAND OR ASK ANYTHING..."
+                            autocomplete="off"
+                        >
+                        <button class="btn btn-send" id="sendBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-voice" id="voiceBtn" title="Always-On Voice">🎤</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Activity Log, Runtime Info, Neural Network -->
+            <div class="right-column">
+                <!-- Activity Log -->
+                <div class="panel activity-log">
+                    <div class="panel-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        ACTIVITY LOG
+                    </div>
+                    <div class="activity-log-content" id="activityLog">
+                        <div>> System initialized successfully</div>
+                        <div>> All diagnostics passed</div>
+                        <div>> Network connection established</div>
+                        <div>> Defense systems online</div>
+                        <div>> Awaiting user input...</div>
+                    </div>
+                </div>
+
+                <!-- Runtime Information -->
+                <div class="panel runtime-panel">
+                    <div class="panel-title">RUNTIME DATA</div>
+                    <div class="runtime-grid">
+                        <div class="runtime-item">
+                            <div class="runtime-label">SESSION ID</div>
+                            <div class="runtime-value" id="sessionId">JRV-5F9A2</div>
+                        </div>
+                        <div class="runtime-item">
+                            <div class="runtime-label">REQUESTS</div>
+                            <div class="runtime-value" id="requests">0</div>
+                        </div>
+                        <div class="runtime-item">
+                            <div class="runtime-label">RESPONSE TIME</div>
+                            <div class="runtime-value" id="responseTime">0ms</div>
+                        </div>
+                        <div class="runtime-item">
+                            <div class="runtime-label">PROTOCOL</div>
+                            <div class="runtime-value">HTTP/2.0</div>
+                        </div>
+                        <div class="runtime-item">
+                            <div class="runtime-label">ENCRYPTION</div>
+                            <div class="runtime-value status-online">AES-256</div>
+                        </div>
+                        <div class="runtime-item">
+                            <div class="runtime-label">API VERSION</div>
+                            <div class="runtime-value">v4.2.1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Neural Network Status -->
+                <div class="panel neural-panel">
+                    <div class="panel-title">NEURAL NETWORK</div>
+                    <div class="neural-status">
+                        <div class="neural-item">
+                            <span>NLP Engine</span>
+                            <span class="status-online">●</span>
+                        </div>
+                        <div class="neural-item">
+                            <span>Vision Module</span>
+                            <span class="status-online">●</span>
+                        </div>
+                        <div class="neural-item">
+                            <span>Voice Recognition</span>
+                            <span class="status-online">●</span>
+                        </div>
+                        <div class="neural-item">
+                            <span>Speech Synthesis</span>
+                            <span class="status-online">●</span>
+                        </div>
+                        <div class="neural-item">
+                            <span>Decision Matrix</span>
+                            <span class="status-online">●</span>
+                        </div>
+                    </div>
+                    <div class="neural-stats">
+                        <div class="neural-stat-item">
+                            <div class="stat-label">ACCURACY</div>
+                            <div class="stat-value">98.7%</div>
+                        </div>
+                        <div class="neural-stat-item">
+                            <div class="stat-label">CONFIDENCE</div>
+                            <div class="stat-value">94.2%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connection Status -->
+                <div class="panel connection-panel">
+                    <div class="panel-title">CONNECTIONS</div>
+                    <div class="connection-item">
+                        <div class="conn-dot status-online"></div>
+                        <div class="conn-info">
+                            <div class="conn-name">Backend Server</div>
+                            <div class="conn-detail">localhost:5000</div>
+                        </div>
+                    </div>
+                    <div class="connection-item">
+                        <div class="conn-dot status-online"></div>
+                        <div class="conn-info">
+                            <div class="conn-name">Speech API</div>
+                            <div class="conn-detail">Active</div>
+                        </div>
+                    </div>
+                    <div class="connection-item">
+                        <div class="conn-dot status-online"></div>
+                        <div class="conn-info">
+                            <div class="conn-name">Database</div>
+                            <div class="conn-detail">Connected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript will go in Part 3 -->
+    <script>
+        // JARVIS AI Assistant - Part 3 (JavaScript)
+// Replace the <script> section content in Part 1 with this JavaScript
+
+const API_URL = 'http://localhost:5000/api';
+let isListening = false;
+let recognition = null;
+let requestCount = 0;
+let sessionStartTime = Date.now();
+
+// ============================================
+// DATE/TIME FUNCTIONS
+// ============================================
+
+function updateDateTime() {
+    const now = new Date();
+    const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 
+                  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+    
+    document.getElementById('dateMonth').textContent = months[now.getMonth()];
+    document.getElementById('dateDay').textContent = String(now.getDate()).padStart(2, '0');
+    document.getElementById('dateTime').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+    
+    // Update circle progress based on seconds
+    const seconds = now.getSeconds();
+    const progress = (seconds / 60) * 440;
+    document.getElementById('timeCircle').style.strokeDashoffset = 440 - progress;
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// ============================================
+// SYSTEM DIAGNOSTICS
+// ============================================
+
+function updateDiagnostics() {
+    // Core Temperature (30-45°C range)
+    const temp = 30 + Math.random() * 15;
+    document.getElementById('coreTemp').textContent = Math.round(temp) + '°C';
+    
+    // Uptime
+    const uptimeMs = Date.now() - sessionStartTime;
+    const hours = Math.floor(uptimeMs / 3600000);
+    const minutes = Math.floor((uptimeMs % 3600000) / 60000);
+    document.getElementById('uptime').textContent = `${hours}h ${minutes}m`;
+    
+    // Processes (200-300 range)
+    const processes = 200 + Math.floor(Math.random() * 100);
+    document.getElementById('processes').textContent = processes;
+    
+    // Latency (5-25ms range)
+    const latency = 5 + Math.floor(Math.random() * 20);
+    document.getElementById('latency').textContent = latency + 'ms';
+}
+
+setInterval(updateDiagnostics, 2000);
+updateDiagnostics();
+
+// ============================================
+// SYSTEM METRICS ANIMATION
+// ============================================
+
+function animateMetrics() {
+    const cpu = 30 + Math.random() * 40;
+    const mem = 60 + Math.random() * 30;
+    const net = 80 + Math.random() * 20;
+    const disk = 35 + Math.random() * 30;
+    
+    document.getElementById('cpuValue').textContent = Math.round(cpu) + '%';
+    document.getElementById('cpuBar').style.width = cpu + '%';
+    
+    document.getElementById('memValue').textContent = Math.round(mem) + '%';
+    document.getElementById('memBar').style.width = mem + '%';
+    
+    document.getElementById('netValue').textContent = Math.round(net) + '%';
+    document.getElementById('netBar').style.width = net + '%';
+    
+    document.getElementById('diskValue').textContent = Math.round(disk) + '%';
+    document.getElementById('diskBar').style.width = disk + '%';
+}
+
+setInterval(animateMetrics, 3000);
+animateMetrics();
+
+// ============================================
+// RUNTIME DATA
+// ============================================
+
+function updateRuntimeData(responseTime = null) {
+    // Update request count
+    document.getElementById('requests').textContent = requestCount;
+    
+    // Update response time if provided
+    if (responseTime !== null) {
+        document.getElementById('responseTime').textContent = responseTime + 'ms';
+    }
+}
+
+// ============================================
+// ACTIVITY LOG FUNCTIONS
+// ============================================
+
+function addActivityLog(text) {
+    const log = document.getElementById('activityLog');
+    const entry = document.createElement('div');
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+    entry.textContent = `> [${timestamp}] ${text}`;
+    log.appendChild(entry);
+    
+    // Keep only last 15 entries
+    while (log.children.length > 15) {
+        log.removeChild(log.firstChild);
+    }
+    
+    log.scrollTop = log.scrollHeight;
+}
+
+// ============================================
+// CHAT FUNCTIONS
+// ============================================
+
+function addMessage(text, isUser) {
+    const chatContainer = document.getElementById('chatContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user' : 'jarvis'}`;
+    messageDiv.innerHTML = `<div class="message-content">${text}</div>`;
+    
+    // Insert before typing indicator
+    const typingIndicator = document.getElementById('typingIndicator');
+    chatContainer.insertBefore(messageDiv, typingIndicator);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    addActivityLog(isUser ? 'User command received' : 'Response generated');
+}
+
+function showTyping() {
+    document.getElementById('typingIndicator').style.display = 'block';
+    document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+}
+
+function hideTyping() {
+    document.getElementById('typingIndicator').style.display = 'none';
+}
+
+// ============================================
+// COMMAND SENDING FUNCTION
+// ============================================
+
+async function sendCommand(command = null) {
+    const input = document.getElementById('commandInput');
+    const cmd = command || input.value.trim();
+    
+    if (!cmd) return;
+    
+    addMessage(cmd, true);
+    if (!command) input.value = '';
+    input.focus();
+    showTyping();
+    
+    const startTime = Date.now();
+    requestCount++;
+    updateRuntimeData();
+    
+    try {
+        const response = await fetch(`${API_URL}/command`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ command: cmd })
+        });
+        
+        const data = await response.json();
+        const responseTime = Date.now() - startTime;
+        
+        hideTyping();
+        updateRuntimeData(responseTime);
+        
+        if (data.success) {
+            addMessage(data.response, false);
+            speakText(data.response);
+            
+            if (data.action === 'open_website' && cmd.includes('youtube')) {
+                setTimeout(() => {
+                    addMessage("💡 You can now search YouTube by typing what you want to watch!", false);
+                }, 1500);
+            }
+        } else {
+            addMessage(data.response || 'Sorry, I encountered an error. Please try again.', false);
+        }
+    } catch (error) {
+        const responseTime = Date.now() - startTime;
+        hideTyping();
+        updateRuntimeData(responseTime);
+        addMessage('⚠️ Cannot connect to backend. Make sure the server is running on port 5000.', false);
+        console.error('Error:', error);
+        addActivityLog('Backend connection failed');
+    }
+}
+
+// ============================================
+// INPUT HANDLERS
+// ============================================
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendCommand();
+    }
+}
+
+// ============================================
+// VOICE CONTROL FUNCTIONS
+// ============================================
+
+function toggleVoiceInput() {
+    const voiceBtn = document.getElementById('voiceBtn');
+    
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        addMessage('⚠️ Voice recognition not supported. Use Chrome or Edge.', false);
+        return;
+    }
+    
+    if (isListening) {
+        if (recognition) {
+            recognition.stop();
+        }
+        isListening = false;
+        voiceBtn.classList.remove('listening');
+        voiceBtn.innerHTML = '🎤';
+        addMessage('🛑 Voice control stopped.', false);
+        addActivityLog('Voice control deactivated');
+    } else {
+        startAlwaysOnListening();
+    }
+}
+
+function startAlwaysOnListening() {
+    const voiceBtn = document.getElementById('voiceBtn');
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onstart = () => {
+        isListening = true;
+        voiceBtn.classList.add('listening');
+        voiceBtn.innerHTML = '🔴';
+        addMessage('🎤 Always-on voice activated! Just speak...', false);
+        addActivityLog('Voice control activated');
+    };
+    
+    recognition.onresult = (event) => {
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript.trim();
+        
+        console.log('Heard:', transcript);
+        
+        if (transcript) {
+            sendCommand(transcript);
+        }
+    };
+    
+    recognition.onend = () => {
+        if (isListening) {
+            console.log('Recognition ended, restarting...');
+            setTimeout(() => {
+                if (isListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Restart error:', e);
+                    }
+                }
+            }, 200);
+        } else {
+            voiceBtn.classList.remove('listening');
+            voiceBtn.innerHTML = '🎤';
+        }
+    };
+    
+    recognition.onerror = (event) => {
+        console.error('Recognition error:', event.error);
+        
+        if (event.error === 'no-speech') {
+            return;
+        }
+        
+        if (event.error === 'aborted' && isListening) {
+            setTimeout(() => {
+                if (isListening) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Restart after abort error:', e);
+                    }
+                }
+            }, 200);
+            return;
+        }
+        
+        if (event.error !== 'network') {
+            addMessage(`⚠️ Voice error: ${event.error}. Click 🎤 to restart.`, false);
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceBtn.innerHTML = '🎤';
+            addActivityLog('Voice error occurred');
+        }
+    };
+    
+    try {
+        recognition.start();
+    } catch (e) {
+        console.error('Failed to start recognition:', e);
+        addMessage('Failed to start voice recognition. Please try again.', false);
+    }
+}
+
+// ============================================
+// TEXT-TO-SPEECH FUNCTION
+// ============================================
+
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 0.9;
+        
+        const voices = window.speechSynthesis.getVoices();
+        const englishVoice = voices.find(voice => voice.lang.startsWith('en') && voice.name.includes('Google'));
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+        
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+// ============================================
+// BACKEND STATUS CHECK
+// ============================================
+
+async function checkStatus() {
+    try {
+        const response = await fetch(`${API_URL}/status`);
+        const data = await response.json();
+        document.getElementById('networkStatus').innerHTML = '<span class="status-online">ONLINE</span>';
+        
+        // Only log on first successful connection or status change
+        if (!window.backendConnected) {
+            addActivityLog('Backend connection established');
+            window.backendConnected = true;
+        }
+    } catch (error) {
+        document.getElementById('networkStatus').innerHTML = '<span style="color: #f00">OFFLINE</span>';
+        
+        // Only log on first disconnection or status change
+        if (window.backendConnected !== false) {
+            addActivityLog('Backend connection lost');
+            window.backendConnected = false;
+        }
+    }
+}
+
+// ============================================
+// NEURAL NETWORK SIMULATION
+// ============================================
+
+function simulateNeuralActivity() {
+    // Randomly flicker neural network indicators
+    const neuralItems = document.querySelectorAll('.neural-item span.status-online');
+    
+    if (Math.random() > 0.9) { // 10% chance
+        const randomItem = neuralItems[Math.floor(Math.random() * neuralItems.length)];
+        if (randomItem) {
+            randomItem.style.opacity = '0.3';
+            setTimeout(() => {
+                randomItem.style.opacity = '1';
+            }, 200);
+        }
+    }
+    
+    // Update neural stats slightly
+    const accuracy = 96 + Math.random() * 3;
+    const confidence = 92 + Math.random() * 6;
+    
+    const accuracyEl = document.querySelector('.neural-stats .stat-value');
+    const confidenceEl = document.querySelectorAll('.neural-stats .stat-value')[1];
+    
+    if (accuracyEl) accuracyEl.textContent = accuracy.toFixed(1) + '%';
+    if (confidenceEl) confidenceEl.textContent = confidence.toFixed(1) + '%';
+}
+
+setInterval(simulateNeuralActivity, 5000);
+
+// ============================================
+// SESSION ID GENERATOR
+// ============================================
+
+function generateSessionId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'JRV-';
+    for (let i = 0; i < 5; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('sessionId').textContent = id;
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+document.getElementById('commandInput').addEventListener('keypress', handleKeyPress);
+document.getElementById('sendBtn').addEventListener('click', () => sendCommand());
+document.getElementById('voiceBtn').addEventListener('click', toggleVoiceInput);
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+// Load voices when available
+if ('speechSynthesis' in window) {
+    speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+    };
+}
+
+// Generate session ID
+generateSessionId();
+
+// Check status every 5 seconds
+setInterval(checkStatus, 5000);
+checkStatus();
+
+// Focus input on load
+document.getElementById('commandInput').focus();
+
+// Initial activity logs
+setTimeout(() => {
+    addActivityLog('Neural network initialized');
+}, 500);
+
+setTimeout(() => {
+    addActivityLog('All systems operational');
+}, 1000);
+
+setTimeout(() => {
+    addActivityLog('Ready for commands');
+}, 1500);
+
+// Show helpful tip after 3 seconds
+setTimeout(() => {
+    addMessage("💡 Pro Tip: Click the 🎤 button for continuous voice control!", false);
+}, 3000);
+
+// Console welcome message
+console.log('%c JARVIS AI Assistant ', 'background: #000; color: #0ff; font-size: 20px; padding: 10px;');
+console.log('%c System Online ', 'background: #0f0; color: #000; font-size: 14px; padding: 5px;');
+console.log('All systems operational. Ready for commands.');
+
+// Prevent page unload during voice recording
+window.addEventListener('beforeunload', (e) => {
+    if (isListening) {
+        e.preventDefault();
+        e.returnValue = 'Voice recording is active. Are you sure you want to leave?';
+        return e.returnValue;
+    }
+});
+    </script>
+</body>
+</html>
