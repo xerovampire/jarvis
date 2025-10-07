@@ -1,7 +1,8 @@
 """
-JARVIS AI - Intelligent Backend with LLM-Powered Command Execution
-The AI thinks and executes commands, not just pattern matching!
-Run: python jarvis_backend_intelligent.py
+JARVIS AI - Enhanced Intelligent Backend with Screen Vision
+Features: Better app opening, folder access, screen vision, click commands
+Run: pip install pyautogui pillow easyocr torch
+Then: python jarvis_backend_enhanced.py
 """
 
 import os
@@ -20,6 +21,10 @@ import threading
 import time
 import google.generativeai as genai
 import re
+import pyautogui
+from PIL import Image
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -40,10 +45,14 @@ class JarvisAI:
         
         self.os_type = platform.system()
         
+        # Enable PyAutoGUI fail-safe
+        pyautogui.FAILSAFE = True
+        
         self.context = {
             'last_browser_tab': None,
             'last_app': None,
-            'conversation_history': []
+            'conversation_history': [],
+            'screen_elements': []
         }
         
         # LLM Configuration
@@ -57,8 +66,8 @@ class JarvisAI:
         if self.llm_config['gemini_api_key']:
             genai.configure(api_key=self.llm_config['gemini_api_key'])
         
-        print("🤖 Jarvis AI initialized with INTELLIGENT command execution!")
-        print("💡 I can now understand and execute ANY command through reasoning!")
+        print("🤖 Jarvis AI initialized with ENHANCED VISION and INTELLIGENCE!")
+        print("👁️ Screen vision enabled - I can see and click!")
     
     def speak(self, text):
         """Convert text to speech"""
@@ -71,230 +80,394 @@ class JarvisAI:
                 pass
         return text
     
-    def listen_continuous(self):
-        """Always-on listening mode"""
-        with sr.Microphone() as source:
-            print("\n🎤 Jarvis is listening (Always On)...")
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
+    def capture_screen(self):
+        """Capture current screen"""
+        try:
+            screenshot = pyautogui.screenshot()
+            return screenshot
+        except Exception as e:
+            print(f"Screen capture error: {e}")
+            return None
+    
+    def image_to_base64(self, image):
+        """Convert PIL image to base64"""
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode()
+    
+    def analyze_screen_with_vision(self, user_query):
+        """Use Gemini Vision to analyze screen and find clickable elements"""
+        try:
+            screenshot = self.capture_screen()
+            if not screenshot:
+                return None
             
-            while self.is_listening:
-                try:
-                    print("👂 Waiting for command...")
-                    audio = self.recognizer.listen(source, timeout=None, phrase_time_limit=10)
-                    
-                    try:
-                        text = self.recognizer.recognize_google(audio)
-                        print(f"\n🗣️ You said: {text}")
-                        result = self.process_command(text)
-                        time.sleep(1)
-                        
-                    except sr.UnknownValueError:
-                        continue
-                    except sr.RequestError as e:
-                        print(f"Speech recognition error: {e}")
-                        time.sleep(2)
-                        
-                except Exception as e:
-                    print(f"Listening error: {e}")
-                    time.sleep(1)
+            # Use Gemini Vision model
+            model = genai.GenerativeModel('models/gemini-2.5-flash')
+            
+            prompt = f"""Analyze this screenshot and help with this user request: "{user_query}"
+
+IMPORTANT: Provide your response as a JSON object with this structure:
+{{
+    "action": "CLICK" | "INFORMATION" | "NOT_FOUND",
+    "target_description": "description of what to click",
+    "approximate_position": {{"x": percentage_x, "y": percentage_y}},
+    "confidence": "high" | "medium" | "low",
+    "reasoning": "explanation of what you found",
+    "response": "what to say to user"
+}}
+
+For click requests (e.g., "click 1st website", "click search button"):
+- Identify the element's position
+- Give x,y as percentages (0-100) of screen dimensions
+- Describe what you're clicking
+
+If analyzing screen content:
+- Describe what you see
+- List numbered items if relevant
+
+Example for "click 1st website":
+{{
+    "action": "CLICK",
+    "target_description": "First search result link",
+    "approximate_position": {{"x": 30, "y": 35}},
+    "confidence": "high",
+    "reasoning": "Found first blue link in search results",
+    "response": "Clicking the first website in the search results"
+}}"""
+
+            response = model.generate_content([prompt, screenshot])
+            response_text = response.text.strip()
+            
+            # Extract JSON
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            
+            return {
+                "action": "INFORMATION",
+                "response": response_text
+            }
+            
+        except Exception as e:
+            print(f"Vision analysis error: {e}")
+            return None
     
-    def start_listening(self):
-        """Start the always-on listening in background"""
-        self.is_listening = True
-        listener_thread = threading.Thread(target=self.listen_continuous, daemon=True)
-        listener_thread.start()
-        print("✅ Always-on voice listening started!")
+    def click_screen_position(self, x_percent, y_percent):
+        """Click at screen position given as percentages"""
+        try:
+            screen_width, screen_height = pyautogui.size()
+            x = int(screen_width * x_percent / 100)
+            y = int(screen_height * y_percent / 100)
+            
+            # Move to position smoothly
+            pyautogui.moveTo(x, y, duration=0.5)
+            time.sleep(0.2)
+            # Click
+            pyautogui.click()
+            print(f"✅ Clicked at ({x}, {y})")
+            return True
+        except Exception as e:
+            print(f"Click error: {e}")
+            return False
     
-    def stop_listening(self):
-        """Stop listening"""
-        self.is_listening = False
-        print("🛑 Voice listening stopped")
+    def llm_interpret_command(self, user_command):
+        """Enhanced LLM interpretation with better reasoning"""
+        
+        # Get installed apps list for context
+        installed_apps = self.get_installed_apps()
+        apps_context = ", ".join(installed_apps[:30]) if installed_apps else "None detected"
+        
+        system_prompt = f"""You are Jarvis, an intelligent AI assistant with screen vision capabilities.
+
+CRITICAL: Respond ONLY with valid JSON. No markdown, no extra text.
+
+Available actions:
+1. OPEN_APP - Open an application
+2. OPEN_FOLDER - Open a folder/directory
+3. SEARCH_WEB - Google search
+4. SEARCH_YOUTUBE - YouTube search
+5. OPEN_WEBSITE - Open specific website
+6. SCREEN_CLICK - Click something on screen
+7. SCREEN_ANALYZE - Analyze what's on screen
+8. CONVERSATION - General conversation
+9. SYSTEM_COMMAND - Execute system command
+
+Operating System: {self.os_type}
+Detected Apps: {apps_context}
+
+For OPEN_APP:
+- Provide FULL app names and ALL possible executables
+- Windows: chrome.exe, Code.exe, notepad.exe, explorer.exe
+- Be exhaustive with executable hints
+
+For OPEN_FOLDER:
+- Common folders: Documents, Downloads, Desktop, Pictures, Music
+- Can open specific paths
+
+For SCREEN_CLICK/ANALYZE:
+- These require screen vision
+- Will trigger secondary analysis
+
+JSON Format:
+{{
+    "action": "ACTION_TYPE",
+    "target": "specific target",
+    "reasoning": "your thinking process",
+    "executable_hints": ["all", "possible", "executables", "paths"],
+    "folder_paths": ["possible/folder/paths"],
+    "response": "what to tell user"
+}}
+
+Examples:
+
+User: "open chrome"
+{{
+    "action": "OPEN_APP",
+    "target": "Google Chrome",
+    "reasoning": "User wants Chrome browser",
+    "executable_hints": ["chrome", "chrome.exe", "google-chrome", "Chrome.exe", "GoogleChromePortable.exe"],
+    "folder_paths": [],
+    "response": "Opening Google Chrome browser"
+}}
+
+User: "open downloads folder"
+{{
+    "action": "OPEN_FOLDER",
+    "target": "Downloads",
+    "reasoning": "User wants to access Downloads folder",
+    "executable_hints": [],
+    "folder_paths": ["~/Downloads", "%USERPROFILE%\\Downloads", "C:\\Users\\%USERNAME%\\Downloads"],
+    "response": "Opening Downloads folder"
+}}
+
+User: "open vs code"
+{{
+    "action": "OPEN_APP",
+    "target": "Visual Studio Code",
+    "reasoning": "VS Code is a popular code editor",
+    "executable_hints": ["code", "code.exe", "Code.exe", "vscode", "code-insiders"],
+    "folder_paths": [],
+    "response": "Launching Visual Studio Code"
+}}
+
+User: "click the first link"
+{{
+    "action": "SCREEN_CLICK",
+    "target": "first link on screen",
+    "reasoning": "User wants to click first visible link",
+    "executable_hints": [],
+    "folder_paths": [],
+    "response": "Let me click the first link for you"
+}}
+
+User: "what's on my screen"
+{{
+    "action": "SCREEN_ANALYZE",
+    "target": "",
+    "reasoning": "User wants screen content description",
+    "executable_hints": [],
+    "folder_paths": [],
+    "response": "Let me analyze your screen"
+}}
+
+User: "open documents"
+{{
+    "action": "OPEN_FOLDER",
+    "target": "Documents",
+    "reasoning": "User wants Documents folder",
+    "executable_hints": [],
+    "folder_paths": ["~/Documents", "%USERPROFILE%\\Documents", "C:\\Users\\%USERNAME%\\Documents"],
+    "response": "Opening your Documents folder"
+}}
+
+Now interpret: {user_command}"""
+
+        try:
+            model = genai.GenerativeModel(self.llm_config['gemini_model'])
+            response = model.generate_content(system_prompt)
+            response_text = response.text.strip()
+            
+            # Remove markdown code blocks if present
+            response_text = re.sub(r'```json\s*|\s*```', '', response_text)
+            
+            # Extract JSON
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            
+            return {
+                "action": "CONVERSATION",
+                "target": "",
+                "reasoning": "Could not parse command",
+                "executable_hints": [],
+                "folder_paths": [],
+                "response": response_text
+            }
+                
+        except Exception as e:
+            print(f"LLM Error: {e}")
+            return None
     
     def get_installed_apps(self):
-        """Get list of commonly installed applications on the system"""
-        apps = []
+        """Enhanced app detection"""
+        apps = set()
         try:
             if self.os_type == "Windows":
+                # Check multiple locations
                 paths = [
                     os.environ.get('PROGRAMFILES', 'C:\\Program Files'),
                     os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'),
                     os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs'),
+                    os.path.join(os.environ.get('APPDATA', ''), 'Microsoft\\Windows\\Start Menu\\Programs'),
                 ]
                 
                 for path in paths:
                     if os.path.exists(path):
-                        for item in os.listdir(path):
-                            apps.append(item)
-        except:
-            pass
-        return apps[:50]  # Return first 50 to avoid too much data
-    
-    def llm_interpret_command(self, user_command):
-        """
-        LLM interprets the command and decides what action to take
-        This is the BRAIN of intelligent execution
-        """
-        
-        system_prompt = f"""You are Jarvis, an intelligent AI assistant that can execute system commands.
-
-IMPORTANT: Analyze the user's command and respond with a JSON object that describes the action.
-
-Available actions:
-1. OPEN_APP - Open an application
-2. SEARCH_WEB - Search on Google
-3. SEARCH_YOUTUBE - Search on YouTube
-4. OPEN_WEBSITE - Open a specific website
-5. CONVERSATION - General conversation/question
-6. SYSTEM_COMMAND - Execute a system command
-
-Operating System: {self.os_type}
-
-Instructions:
-- Think intelligently about what the user wants
-- "open vs" should map to "Visual Studio Code" or "vscode"
-- "open chrome" should open "Google Chrome"
-- Be smart about abbreviations and common names
-- For app names, provide the FULL proper name and common executable names
-
-Respond ONLY with a JSON object in this format:
-{{
-    "action": "OPEN_APP" | "SEARCH_WEB" | "SEARCH_YOUTUBE" | "OPEN_WEBSITE" | "CONVERSATION" | "SYSTEM_COMMAND",
-    "target": "the app name, search query, website, or command",
-    "reasoning": "brief explanation of your interpretation",
-    "executable_hints": ["possible.exe", "names", "to", "try"],
-    "response": "what to say to the user"
-}}
-
-Examples:
-User: "open vs"
-{{
-    "action": "OPEN_APP",
-    "target": "Visual Studio Code",
-    "reasoning": "VS commonly refers to Visual Studio Code",
-    "executable_hints": ["code", "code.exe", "vscode"],
-    "response": "Opening Visual Studio Code"
-}}
-
-User: "search python tutorials"
-{{
-    "action": "SEARCH_WEB",
-    "target": "python tutorials",
-    "reasoning": "User wants to search for information",
-    "executable_hints": [],
-    "response": "Searching for python tutorials"
-}}
-
-User: "what is quantum computing"
-{{
-    "action": "CONVERSATION",
-    "target": "",
-    "reasoning": "This is a knowledge question",
-    "executable_hints": [],
-    "response": "Quantum computing is a type of computation that harnesses quantum mechanical phenomena like superposition and entanglement to process information in ways classical computers cannot. It uses quantum bits or 'qubits' that can exist in multiple states simultaneously, enabling parallel processing of vast amounts of data."
-}}
-
-Now interpret this command:
-User: {user_command}
-"""
-
-        try:
-            model = genai.GenerativeModel('models/gemini-2.5-flash')
-            response = model.generate_content(system_prompt)
-            
-            # Extract JSON from response
-            response_text = response.text.strip()
-            
-            # Try to find JSON in the response
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-                interpretation = json.loads(json_str)
-                return interpretation
-            else:
-                # Fallback if no JSON found
-                return {
-                    "action": "CONVERSATION",
-                    "target": "",
-                    "reasoning": "Could not parse command",
-                    "executable_hints": [],
-                    "response": response_text
-                }
-                
+                        try:
+                            for item in os.listdir(path):
+                                apps.add(item.replace('.lnk', '').replace('.exe', ''))
+                        except:
+                            continue
+                            
         except Exception as e:
-            print(f"LLM Interpretation Error: {e}")
-            return None
+            print(f"App detection error: {e}")
+        
+        return list(apps)
+    
+    def open_folder(self, folder_name, folder_paths):
+        """Open folder with enhanced path detection"""
+        print(f"📁 Opening folder: {folder_name}")
+        
+        if self.os_type == "Windows":
+            # Common Windows folders
+            user_profile = os.environ.get('USERPROFILE', '')
+            common_folders = {
+                'downloads': os.path.join(user_profile, 'Downloads'),
+                'documents': os.path.join(user_profile, 'Documents'),
+                'desktop': os.path.join(user_profile, 'Desktop'),
+                'pictures': os.path.join(user_profile, 'Pictures'),
+                'music': os.path.join(user_profile, 'Music'),
+                'videos': os.path.join(user_profile, 'Videos'),
+            }
+            
+            folder_lower = folder_name.lower()
+            
+            # Try common folders first
+            if folder_lower in common_folders:
+                path = common_folders[folder_lower]
+                if os.path.exists(path):
+                    os.startfile(path)
+                    print(f"✅ Opened: {path}")
+                    return True
+            
+            # Try provided paths
+            for path_template in folder_paths:
+                path = os.path.expandvars(path_template)
+                path = os.path.expanduser(path)
+                if os.path.exists(path):
+                    os.startfile(path)
+                    print(f"✅ Opened: {path}")
+                    return True
+            
+            # Try direct path
+            if os.path.exists(folder_name):
+                os.startfile(folder_name)
+                return True
+                
+        elif self.os_type == "Darwin":  # macOS
+            folder_paths_mac = [
+                os.path.expanduser(f"~/{folder_name}"),
+                f"/Users/{os.getenv('USER')}/{folder_name}"
+            ]
+            for path in folder_paths_mac:
+                if os.path.exists(path):
+                    subprocess.run(['open', path])
+                    return True
+                    
+        elif self.os_type == "Linux":
+            folder_paths_linux = [
+                os.path.expanduser(f"~/{folder_name}"),
+                f"/home/{os.getenv('USER')}/{folder_name}"
+            ]
+            for path in folder_paths_linux:
+                if os.path.exists(path):
+                    subprocess.run(['xdg-open', path])
+                    return True
+        
+        return False
     
     def smart_find_and_open_app(self, app_name, executable_hints):
-        """
-        Intelligently find and open any application
-        Uses LLM hints and system search
-        """
+        """Enhanced app opening with better search"""
         print(f"🔍 Searching for: {app_name}")
         print(f"💡 Hints: {executable_hints}")
         
         if self.os_type == "Windows":
-            # Try executable hints first
+            # Try direct execution first
             for hint in executable_hints:
                 try:
-                    if hint.endswith('.exe'):
-                        os.startfile(hint)
-                        print(f"✅ Opened via hint: {hint}")
-                        return True
-                    else:
-                        # Try as command
-                        subprocess.Popen([hint], shell=True)
-                        print(f"✅ Opened via command: {hint}")
-                        return True
+                    # Try as direct command
+                    subprocess.Popen(hint, shell=True)
+                    time.sleep(1)
+                    print(f"✅ Opened via command: {hint}")
+                    return True
                 except:
-                    continue
+                    pass
             
-            # Search in common paths
+            # Try with 'start' command
+            for hint in executable_hints:
+                try:
+                    os.system(f'start "" "{hint}"')
+                    time.sleep(1)
+                    print(f"✅ Opened via start: {hint}")
+                    return True
+                except:
+                    pass
+            
+            # Deep search in Program Files
             search_paths = [
                 os.environ.get('PROGRAMFILES', 'C:\\Program Files'),
                 os.environ.get('PROGRAMFILES(X86)', 'C:\\Program Files (x86)'),
                 os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs'),
-                os.path.join(os.environ.get('APPDATA', ''), 'Microsoft\\Windows\\Start Menu\\Programs'),
             ]
             
-            # Search terms based on app name and hints
             search_terms = [app_name.lower()] + [h.lower().replace('.exe', '') for h in executable_hints]
             
             for base_path in search_paths:
                 if not os.path.exists(base_path):
                     continue
-                    
+                
                 try:
                     for root, dirs, files in os.walk(base_path):
-                        # Check depth to avoid too deep searches
                         depth = root[len(base_path):].count(os.sep)
-                        if depth > 3:
+                        if depth > 4:  # Increased depth
                             continue
                         
                         for file in files:
                             if file.endswith('.exe'):
                                 file_lower = file.lower()
-                                # Check if any search term matches
                                 for term in search_terms:
-                                    if term in file_lower:
+                                    if term in file_lower or file_lower in term:
                                         exe_path = os.path.join(root, file)
-                                        print(f"✅ Found: {exe_path}")
                                         try:
                                             os.startfile(exe_path)
+                                            print(f"✅ Found and opened: {exe_path}")
                                             return True
                                         except:
-                                            continue
-                except Exception as e:
-                    continue
-            
-            # Try Windows start command
-            for hint in [app_name] + executable_hints:
-                try:
-                    os.system(f'start "" "{hint}"')
-                    time.sleep(1)  # Give it time to start
-                    print(f"✅ Attempted via start command: {hint}")
-                    return True
+                                            pass
                 except:
                     continue
+            
+            # Try PowerShell Get-Command
+            try:
+                for hint in executable_hints[:3]:
+                    cmd = f'powershell -Command "Start-Process {hint}"'
+                    subprocess.run(cmd, shell=True, capture_output=True)
+                    time.sleep(1)
+                    print(f"✅ Opened via PowerShell: {hint}")
+                    return True
+            except:
+                pass
                     
         elif self.os_type == "Darwin":  # macOS
             for hint in [app_name] + executable_hints:
@@ -313,25 +486,6 @@ User: {user_command}
                     continue
         
         return False
-    
-    def get_llm_response(self, prompt):
-        """Get intelligent response from Gemini for conversations"""
-        system_prompt = """You are Jarvis, Tony Stark's AI assistant. You are:
-- Highly intelligent, witty, and sophisticated
-- Expert in technology, science, and general knowledge
-- Helpful and conversational
-- Slightly humorous but professional
-
-Provide detailed, intelligent responses. Keep responses concise but informative (2-4 sentences for simple questions, more for complex ones)."""
-
-        try:
-            model = genai.GenerativeModel('models/gemini-2.5-flash')
-            full_prompt = f"{system_prompt}\n\nUser: {prompt}\nJarvis:"
-            response = model.generate_content(full_prompt)
-            return response.text
-        except Exception as e:
-            print(f"LLM Error: {e}")
-            return "I encountered an error processing that request."
     
     def search_web(self, query):
         """Search the web"""
@@ -363,24 +517,19 @@ Provide detailed, intelligent responses. Keep responses concise but informative 
         return url
     
     def process_command(self, command):
-        """
-        INTELLIGENT command processing using LLM
-        The AI thinks about what you want and executes it
-        """
+        """Enhanced command processing with vision support"""
         if not command:
             return {'success': False, 'response': 'No command received'}
         
         command_lower = command.lower()
         
-        # Quick exit commands
-        if any(word in command_lower for word in ['exit', 'quit', 'goodbye', 'stop listening']):
+        # Quick exit
+        if any(word in command_lower for word in ['exit', 'quit', 'goodbye']):
             response = self.speak("Goodbye! Shutting down.")
-            if self.use_voice:
-                self.stop_listening()
             return {'success': True, 'response': response, 'action': 'exit'}
         
-        # Let the LLM interpret the command
-        print("🧠 Analyzing command with AI...")
+        # AI interpretation
+        print("🧠 Analyzing command with enhanced AI...")
         interpretation = self.llm_interpret_command(command)
         
         if not interpretation:
@@ -393,15 +542,51 @@ Provide detailed, intelligent responses. Keep responses concise but informative 
         target = interpretation.get('target', '')
         ai_response = interpretation.get('response', '')
         executable_hints = interpretation.get('executable_hints', [])
+        folder_paths = interpretation.get('folder_paths', [])
         
-        # Execute based on AI's decision
+        # Execute based on action
         if action == "OPEN_APP":
             success = self.smart_find_and_open_app(target, executable_hints)
             if success:
                 response = self.speak(ai_response)
                 return {'success': True, 'response': response, 'action': 'open_app'}
             else:
-                response = self.speak(f"I couldn't find {target} on your system. Please make sure it's installed.")
+                response = self.speak(f"I couldn't find {target}. Please ensure it's installed.")
+                return {'success': False, 'response': response}
+        
+        elif action == "OPEN_FOLDER":
+            success = self.open_folder(target, folder_paths)
+            if success:
+                response = self.speak(ai_response)
+                return {'success': True, 'response': response, 'action': 'open_folder'}
+            else:
+                response = self.speak(f"I couldn't find the {target} folder.")
+                return {'success': False, 'response': response}
+        
+        elif action == "SCREEN_CLICK":
+            self.speak("Let me analyze your screen...")
+            vision_result = self.analyze_screen_with_vision(command)
+            
+            if vision_result and vision_result.get('action') == 'CLICK':
+                pos = vision_result.get('approximate_position', {})
+                if pos:
+                    success = self.click_screen_position(pos['x'], pos['y'])
+                    if success:
+                        response = self.speak(vision_result.get('response', 'Clicked'))
+                        return {'success': True, 'response': response, 'action': 'click'}
+            
+            response = self.speak("I couldn't identify what to click on the screen.")
+            return {'success': False, 'response': response}
+        
+        elif action == "SCREEN_ANALYZE":
+            self.speak("Analyzing your screen...")
+            vision_result = self.analyze_screen_with_vision(command)
+            
+            if vision_result:
+                response = self.speak(vision_result.get('response', 'Screen analyzed'))
+                return {'success': True, 'response': response, 'action': 'analyze'}
+            else:
+                response = self.speak("I couldn't analyze the screen.")
                 return {'success': False, 'response': response}
         
         elif action == "SEARCH_WEB":
@@ -454,30 +639,42 @@ def handle_command():
     result = jarvis.process_command(command)
     return jsonify(result)
 
+@app.route('/api/screen', methods=['GET'])
+def get_screen():
+    """Get current screen analysis"""
+    screenshot = jarvis.capture_screen()
+    if screenshot:
+        img_base64 = jarvis.image_to_base64(screenshot)
+        return jsonify({'success': True, 'image': img_base64})
+    return jsonify({'success': False})
+
 @app.route('/api/status', methods=['GET'])
 def status():
     return jsonify({
         'status': 'online',
         'context': jarvis.context,
-        'llm_provider': jarvis.llm_config['provider']
+        'llm_provider': jarvis.llm_config['provider'],
+        'vision_enabled': True
     })
 
 if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🤖 JARVIS AI - INTELLIGENT Backend Server")
-    print("="*60)
+    print("\n" + "="*70)
+    print("🤖 JARVIS AI - ENHANCED INTELLIGENT Backend with VISION")
+    print("="*70)
     print("\n✅ All systems online!")
-    print("\n🧠 INTELLIGENT MODE ACTIVATED!")
-    print("   - AI thinks about your commands")
-    print("   - Can open ANY installed application")
-    print("   - Understands abbreviations and context")
-    print("   - No pre-feeding required!")
+    print("\n🧠 ENHANCED FEATURES:")
+    print("   ✓ Better AI reasoning for app detection")
+    print("   ✓ Folder opening support")
+    print("   ✓ Screen vision with Gemini")
+    print("   ✓ Click commands (e.g., 'click 1st website')")
+    print("   ✓ Screen analysis ('what's on my screen')")
     print("\n💡 Examples:")
-    print("   'open vs' → Opens Visual Studio Code")
-    print("   'open chrome' → Opens Google Chrome")
-    print("   'search python tutorials' → Google search")
-    print("   'what is AI' → Intelligent conversation")
+    print("   'open chrome'           → Opens Google Chrome")
+    print("   'open downloads folder' → Opens Downloads")
+    print("   'click first link'      → Uses vision to click")
+    print("   'what's on my screen'   → Describes screen content")
+    print("   'open vs code'          → Opens Visual Studio Code")
     print("\n🌐 Server running at: http://localhost:5000")
-    print("="*60 + "\n")
+    print("="*70 + "\n")
     
     app.run(debug=True, port=5000, use_reloader=False)
