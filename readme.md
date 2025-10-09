@@ -46,7 +46,7 @@ A sophisticated AI-powered desktop assistant with complete system control capabi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/xeroinsane/jarvis.git
+   git clone https://github.com/xerovampire/jarvis.git
    cd jarvis-ai
    ```
 
@@ -336,7 +336,7 @@ python jarvis_backend.py --debug
 
 ### Development Setup
 ```bash
-git clone https://github.com/xeroinsane/jarvis.git
+git clone https://github.com/xerovampire/jarvis.git
 cd jarvis
 pip install -r requirements.txt
 python jarvis_backend.py
@@ -360,3 +360,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Check the [Issues](https://github.com/xeroinsane/jarvis/issues) page
 
 *"Sometimes you gotta run before you can walk."* - Tony Stark
+
